@@ -13,29 +13,33 @@ def run(plan, args):
     # _______________________________________________________________________________
     # 1. Start Postgres
     # _______________________________________________________________________________
-
     plan.print("Starting Postgres service...")
     postgres_service = plan.add_service(
         name = "postgres",
         config = ServiceConfig(
             image = postgres_image,
-            ports = {"postgres": 5432},
+            ports = {
+                "postgres": 5432,
+            },
             env_vars = {
                 "POSTGRES_USER": postgres_user,
                 "POSTGRES_PASSWORD": postgres_password,
                 "POSTGRES_DB": postgres_db,
             },
-            cmd = ["postgres", "-c", "fsync=off", "-c", "full_page_writes=off"],
+            cmd = [
+                "postgres",
+                "-c", "fsync=off",
+                "-c", "full_page_writes=off",
+            ],
         ),
     )
 
     postgres_host = postgres_service.hostname()
-    plan.print(f"✅ Postgres running at host: {postgres_host}")
+    plan.print("✅ Postgres running at host: {}".format(postgres_host))
 
     # _______________________________________________________________________________
     # 2. Start Execution Layer (Geth)
     # _______________________________________________________________________________
-
     plan.print("Starting Geth (execution client)...")
     el_service = plan.add_service(
         name = "geth",
@@ -62,12 +66,11 @@ def run(plan, args):
 
     el_rpc = "http://{}:{}".format(el_service.hostname(), 8545)
     engine_api = "{}:{}".format(el_service.hostname(), 8551)
-    plan.print(f"✅ Geth running at {el_rpc}")
+    plan.print("✅ Geth running at {}".format(el_rpc))
 
     # _______________________________________________________________________________
     # 3. Start Lighthouse Beacon Node (with Postgres backend)
     # _______________________________________________________________________________
-
     plan.print("Starting Lighthouse beacon node with Postgres backend...")
 
     lighthouse_service = plan.add_service(
@@ -81,7 +84,7 @@ def run(plan, args):
             cmd = [
                 "lighthouse", "bn",
                 "--network", "mainnet",
-                "--execution-endpoint", f"http://{engine_api}",
+                "--execution-endpoint", "http://{}".format(engine_api),
                 "--execution-jwt", "/jwtsecret/jwt.hex",
                 "--http",
                 "--http-address", "0.0.0.0",
@@ -90,7 +93,9 @@ def run(plan, args):
                 "--metrics-address", "0.0.0.0",
                 "--metrics-port", "5054",
                 "--beacon-node-backend", "postgres",
-                "--postgres-url", f"postgresql://{postgres_user}:{postgres_password}@{postgres_host}:5432/{postgres_db}",
+                "--postgres-url", "postgresql://{}:{}@{}:5432/{}".format(
+                    postgres_user, postgres_password, postgres_host, postgres_db
+                ),
                 "--datadir", "/data/lighthouse",
             ],
             files = {
@@ -101,10 +106,11 @@ def run(plan, args):
 
     plan.print("✅ Lighthouse beacon node with Postgres backend started successfully")
 
-    plan.print("""
-    🎯 Testnet launched successfully!
-    - Geth RPC:        http://localhost:8545
-    - Lighthouse REST: http://localhost:5052
-    - Postgres:        connect via psql postgresql://postgres:admin@localhost:5432/store
-    """)
-
+    plan.print(
+        """
+🎯 Testnet launched successfully!
+- Geth RPC:        http://localhost:8545
+- Lighthouse REST: http://localhost:5052
+- Postgres:        postgresql://postgres:admin@localhost:5432/store
+"""
+    )

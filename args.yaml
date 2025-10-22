@@ -1,0 +1,6 @@
+postgres_image: postgres:16
+postgres_user: postgres
+postgres_password: admin
+postgres_db: store
+lighthouse_image: lighthouse-postgres:local
+jwt_file_artifact: ""

@@ -1,0 +1,3 @@
+name: lighthouse-postgres-test
+description: Launches a minimal Ethereum devnet (geth + lighthouse) where Lighthouse runs with a Postgres backend.
+
